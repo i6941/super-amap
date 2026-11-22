@@ -16,14 +16,21 @@ The diagnostic receiver listens on loopback. Pair each device with a unique bear
 
 This public GitHub repository contains tooling and synthetic tests. Vehicle diagnostics are sent only to a separately configured, authenticated HTTPS receiver. An authorized release asset or a legally suitable test APK can be supplied separately for an update integration run.
 
-## code157 pre-release
+## GAC AION LX release
 
-[Download the code157 APK](https://github.com/i6941/super-amap/releases/download/v0.20.1-code157/super-amap-code26000157.apk).
-The application ID is `com.aaronlab.superamap` (versionCode `26000157`).
+The release targets the GAC AION LX (广汽埃安 LX). Install the
+[Super Amap APK](https://github.com/i6941/super-amap/releases/download/v0.20.1-code157/super-amap-code26000157.apk)
+first. Its application ID is `com.aaronlab.superamap` (versionCode `26000157`).
+Install the optional
+[head-unit relay APK](https://github.com/i6941/super-amap/releases/download/v0.20.1-code157/aion-lx-amap-relay-code571.apk)
+to route the factory desktop navigation entries and voice commands to Super
+Amap. See the [release notes](https://github.com/i6941/super-amap/releases/tag/v0.20.1-code157)
+for the prerequisites for updating the factory navigation app.
 
-The APK uses the project's local test signing identity. APK Signature
-Scheme v2 verified at Android API 27. Clean installation and cold launch
-were checked on Android 14 in an emulator. Head-unit validation is pending.
+The vehicle owner confirmed testing on a GAC AION LX head unit. The APK
+signatures were verified at Android API 27. The code571 relay targets the
+release application ID and passed offline checks. An in-vehicle check of
+the two release APKs together is pending.
 
 [Build report](releases/code157.json) and
 [application ID build script](tools/build_release_identity.py). The script
