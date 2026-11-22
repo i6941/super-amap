@@ -14,4 +14,4 @@ The Android sources implement HTTPS lookup and download, update verification aga
 
 The diagnostic receiver listens on loopback. Pair each device with a unique bearer and configure only its SHA-256 digest in the receiver registry. Use a private TLS ingress with an upload limit and rate limiting. A successful response acknowledges a batch only after the SQLite transaction commits. The uploader retains batches after interruptions and the receiver deduplicates retries. The receiver accepts only junction diagnostic rows. It does not accept arbitrary logcat, GPS data or screenshots.
 
-The initial GitHub repository is private and contains code and synthetic tests. An authorized release asset or a legally suitable test APK can be supplied separately for an update integration run.
+This public GitHub repository contains tooling and synthetic tests. Vehicle diagnostics are sent only to a separately configured, authenticated HTTPS receiver. An authorized release asset or a legally suitable test APK can be supplied separately for an update integration run.
