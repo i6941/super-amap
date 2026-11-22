@@ -1,0 +1,31 @@
+{
+  "apk": "super-amap-local-code26000157.apk",
+  "package": "com.aaronlab.superamap",
+  "version_code": 26000157,
+  "sha256": "9f2b5a715aa2f6a3fe8fde484e840cf932a3c7b8260acd905350e0c6b265188f",
+  "signature": {
+    "verified": true,
+    "checked_api": 27,
+    "v1": false,
+    "v2": true,
+    "errors": 0,
+    "warnings": 0,
+    "warning_types": {},
+    "certificate_sha256": "2eb83fbdc4f257b14f9be0f6c56da84b5375565346a827818d653237aa42b2d5"
+  },
+  "signing": "local test identity",
+  "changed_payload": [
+    "AndroidManifest.xml",
+    "classes2.dex",
+    "resources.arsc"
+  ],
+  "changed_methods": [
+    [
+      "Lxyz/aaron/superamap/energy/EnergyController;",
+      "attach",
+      "(Landroid/view/View;Landroid/view/View;I)V"
+    ]
+  ],
+  "can_upgrade_trial_package": false,
+  "vehicle_validated": false
+}
