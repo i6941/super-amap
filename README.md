@@ -18,10 +18,8 @@ This public GitHub repository contains tooling and synthetic tests. Vehicle diag
 
 ## code157 pre-release
 
-The application ID is `com.aaronlab.superamap` (versionCode `26000157`). This
-installs separately from the trial package `xyz.aaron.superamap`. Android
-keeps their settings, local trip history and permissions separate. The
-existing vehicle desktop and voice relay still targets the trial package.
+[Download the code157 APK](https://github.com/i6941/super-amap/releases/download/v0.20.1-code157/super-amap-code26000157.apk).
+The application ID is `com.aaronlab.superamap` (versionCode `26000157`).
 
 The APK uses the project's local test signing identity. APK Signature
 Scheme v2 verified at Android API 27. Clean installation and cold launch
