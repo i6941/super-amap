@@ -1,4 +1,8 @@
-# Super Amap release and diagnostics
+# 超级高德 · 广汽埃安 LX
+
+**[下载主包和转接包（GitHub Release）](https://github.com/i6941/super-amap/releases/tag/v0.20.1-code157)**
+
+## Release and diagnostics tooling
 
 This directory contains the project's release manifest tooling, diagnostic receiver and Android client components. The repository can be used without OEM assets or any collected vehicle data.
 
