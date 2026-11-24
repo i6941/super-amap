@@ -1,6 +1,8 @@
 # 超级高德 · 广汽埃安 LX
 
-**[下载主包和转接包（GitHub Release）](https://github.com/i6941/super-amap/releases/tag/v0.20.1-code157)**
+**[下载主包和转接包（GitHub Releases）](https://github.com/i6941/super-amap/releases)**
+
+[埃安 LX 改造笔记和排错经验](docs/aion-lx-engineering-notes.md)
 
 ## Release and diagnostics tooling
 
