@@ -4,8 +4,12 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.util.TypedValue;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -19,6 +23,7 @@ import java.util.concurrent.Executors;
 public final class UpdateActivity extends Activity {
     private static final int INSTALL = 1;
     private static final String RELEASE_KEY = "superamap-update-key.der";
+    private static final String TAG = "SuperAmapUpdate";
     private final ExecutorService worker = Executors.newFixedThreadPool(2);
     private final Row main = new Row(GithubUpdates.MAIN, "超级高德");
     private final Row relay = new Row(GithubUpdates.RELAY, "LX 转接包");
@@ -31,17 +36,28 @@ public final class UpdateActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        float density = getResources().getDisplayMetrics().density;
         ScrollView scroll = new ScrollView(this);
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        int padding = (int) (24 * getResources().getDisplayMetrics().density);
-        content.setPadding(padding, padding, padding, padding);
+        content.setBackgroundColor(0xE6000000);
+        content.setPadding(dp(200, density), dp(36, density), dp(36, density), dp(36, density));
+        TextView heading = text("超级高德更新", 40, true);
+        content.addView(heading, layout(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 0, 6, density));
+        TextView note = text("主包与 LX 转接包分开检查，下载后由系统安装器确认。", 24, false);
+        note.setTextColor(0xFFB0BEC5);
+        content.addView(note, layout(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 0, 20, density));
         addRow(content, main);
         addRow(content, relay);
         refresh = new Button(this);
-        refresh.setText("检查更新");
+        refresh.setText("重新检查更新");
+        refresh.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28);
+        refresh.setMinHeight(dp(64, density));
         refresh.setOnClickListener(view -> check());
-        content.addView(refresh);
+        content.addView(refresh, layout(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 28, 0, density));
         scroll.addView(content);
         setContentView(scroll);
 
@@ -57,19 +73,41 @@ public final class UpdateActivity extends Activity {
         }
     }
 
+    private int dp(int value, float density) {
+        return (int) (value * density);
+    }
+
+    private TextView text(String value, int size, boolean bold) {
+        TextView view = new TextView(this);
+        view.setText(value);
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, size);
+        if (bold) view.setTypeface(null, Typeface.BOLD);
+        return view;
+    }
+
+    private LinearLayout.LayoutParams layout(int width, int height, int top, int bottom, float density) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, height);
+        params.topMargin = dp(top, density);
+        params.bottomMargin = dp(bottom, density);
+        return params;
+    }
+
     private void addRow(LinearLayout content, Row row) {
-        TextView title = new TextView(this);
-        title.setText(row.title);
-        title.setTextSize(20);
-        content.addView(title);
-        row.status = new TextView(this);
-        row.status.setTextSize(16);
-        content.addView(row.status);
+        float density = getResources().getDisplayMetrics().density;
+        TextView title = text(row.title, 32, true);
+        content.addView(title, layout(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 28, 8, density));
+        row.status = text("", 26, false);
+        content.addView(row.status, layout(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 0, 12, density));
         row.download = new Button(this);
         row.download.setText("下载并确认安装");
+        row.download.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
+        row.download.setMinHeight(dp(64, density));
         row.download.setEnabled(false);
         row.download.setOnClickListener(view -> download(row));
-        content.addView(row.download);
+        content.addView(row.download, layout(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 0, 16, density));
     }
 
     private void unavailable(String message) {
@@ -107,14 +145,15 @@ public final class UpdateActivity extends Activity {
         try {
             PackageInfo installed = GithubUpdates.installed(getPackageManager(), row.packageName);
             current = "已装 " + installed.versionCode + "，";
-            found = GithubUpdates.check(installed, releaseKey);
+            found = GithubUpdates.check(getPackageManager(), installed, releaseKey);
             message = current + (found == null ? "已是最新版本"
                     : "可更新至 " + found.versionCode
                     + (found.channel.isEmpty() ? "" : "（" + found.channel + "）"));
         } catch (PackageManager.NameNotFoundException absent) {
             message = "当前未安装可更新的" + row.title;
         } catch (Exception failure) {
-            message = current + "暂时无法验证更新，请重试";
+            Log.w(TAG, "Update check failed for " + row.packageName, failure);
+            message = current + "暂时无法验证更新（" + reason(failure) + "）";
         }
         final String result = message;
         final UpdateVerifier offer = found;
@@ -125,6 +164,19 @@ public final class UpdateActivity extends Activity {
             checking--;
             updateButtons();
         });
+    }
+
+    private static String reason(Exception failure) {
+        String message = failure.getMessage();
+        if (message == null) return failure.getClass().getSimpleName();
+        if (message.contains("HTTP 403")) return "请求被限流";
+        if (message.contains("HTTP 404")) return "清单不存在";
+        if (message.contains("No authenticated")) return "所有通路均不可用";
+        if (message.contains("signature") || message.contains("Signature")) return "清单签名不匹配";
+        if (message.contains("identity") || message.contains("certificate") || message.contains("signer"))
+            return "安装包身份不匹配";
+        if (message.toLowerCase().contains("timeout")) return "网络超时";
+        return failure.getClass().getSimpleName();
     }
 
     private void download(Row row) {

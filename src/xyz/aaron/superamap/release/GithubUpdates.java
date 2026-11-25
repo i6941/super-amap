@@ -28,7 +28,7 @@ final class GithubUpdates {
         return packages.getPackageInfo(name, PackageManager.GET_SIGNATURES);
     }
 
-    static UpdateVerifier check(PackageInfo installed, byte[] key) throws Exception {
+    static UpdateVerifier check(PackageManager packages, PackageInfo installed, byte[] key) throws Exception {
         String file = FEED + installed.packageName;
         Exception failure = null;
         UpdateVerifier newestMirror = null;
@@ -36,7 +36,7 @@ final class GithubUpdates {
             if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
             try {
                 UpdateVerifier offer = UpdateDownload.inspect(URI.create(prefix + file + ".json"),
-                        URI.create(prefix + file + ".sig"), key, installed);
+                        URI.create(prefix + file + ".sig"), key, packages, installed);
                 if (!isReleaseAsset(offer.url)) throw new SecurityException("Unexpected release repository");
                 offer.channel = channel(prefix);
                 if (prefix.isEmpty()) return offer.versionCode > installed.versionCode ? offer : null;

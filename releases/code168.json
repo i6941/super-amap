@@ -1,6 +1,6 @@
 {
   "apk": "super-amap-code26000168.apk",
-  "sha256": "b3a03f16adf4b0344a3848ba4618c8825eb230059ffbc4e6f36831109f9d641a",
+  "sha256": "97809be2a765bfd819749b434b2615394d17404a729594ef58be7e01183002a6",
   "version_code": 26000168,
   "changed_payload": [
     "AndroidManifest.xml",

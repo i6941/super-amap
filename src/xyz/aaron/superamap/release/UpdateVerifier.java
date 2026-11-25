@@ -41,14 +41,14 @@ public final class UpdateVerifier {
     }
 
     public static UpdateVerifier verifyManifest(byte[] payload, byte[] signature, byte[] publicKey,
-                                                 PackageInfo installed) throws Exception {
-        UpdateVerifier release = inspectManifest(payload, signature, publicKey, installed);
+                                                 PackageManager packages, PackageInfo installed) throws Exception {
+        UpdateVerifier release = inspectManifest(payload, signature, publicKey, packages, installed);
         if (release.versionCode <= installed.versionCode) throw new SecurityException("Non-increasing version");
         return release;
     }
 
     static UpdateVerifier inspectManifest(byte[] payload, byte[] signature, byte[] publicKey,
-                                          PackageInfo installed) throws Exception {
+                                          PackageManager packages, PackageInfo installed) throws Exception {
         if (payload.length > 16 * 1024 || signature.length > 1024 || publicKey.length > 2048)
             throw new IllegalArgumentException("Oversized update metadata");
         RSAPublicKey key = (RSAPublicKey) KeyFactory.getInstance("RSA")
@@ -59,10 +59,25 @@ public final class UpdateVerifier {
         verifier.update(payload);
         if (!verifier.verify(signature)) throw new SecurityException("Manifest signature mismatch");
         UpdateVerifier release = new UpdateVerifier(new JSONObject(new String(payload, StandardCharsets.UTF_8)));
+        String actual = installedFingerprint(packages, installed);
         if (!release.packageName.equals(installed.packageName)
-                || !release.certificateSha256.equals(fingerprint(installed.signatures)))
+                || !release.certificateSha256.equals(actual))
             throw new SecurityException("Unexpected update identity");
         return release;
+    }
+
+    /**
+     * The package manager record can be stale after an over-install on some head units. Prefer the
+     * signer recorded in the installed APK itself; fall back to the package record when unavailable.
+     */
+    private static String installedFingerprint(PackageManager packages, PackageInfo installed) throws Exception {
+        String source = installed.applicationInfo == null ? null : installed.applicationInfo.sourceDir;
+        if (source != null) {
+            PackageInfo archive = packages.getPackageArchiveInfo(source, PackageManager.GET_SIGNATURES);
+            if (archive != null && archive.signatures != null && archive.signatures.length == 1)
+                return fingerprint(archive.signatures);
+        }
+        return fingerprint(installed.signatures);
     }
 
     public void verifyApk(File file, PackageManager packages) throws Exception {

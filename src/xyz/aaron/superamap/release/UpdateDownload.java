@@ -18,15 +18,15 @@ public final class UpdateDownload {
     private UpdateDownload() {}
 
     public static UpdateVerifier check(URI manifest, URI signature, byte[] publicKey,
-                                       PackageInfo installed) throws Exception {
+                                       PackageManager packages, PackageInfo installed) throws Exception {
         return UpdateVerifier.verifyManifest(readSmall(manifest, 16 * 1024),
-                readSmall(signature, 1024), publicKey, installed);
+                readSmall(signature, 1024), publicKey, packages, installed);
     }
 
-    static UpdateVerifier inspect(URI manifest, URI signature, byte[] publicKey, PackageInfo installed)
-            throws Exception {
+    static UpdateVerifier inspect(URI manifest, URI signature, byte[] publicKey,
+                                  PackageManager packages, PackageInfo installed) throws Exception {
         return UpdateVerifier.inspectManifest(readSmall(manifest, 16 * 1024),
-                readSmall(signature, 1024), publicKey, installed);
+                readSmall(signature, 1024), publicKey, packages, installed);
     }
 
     public static File download(UpdateVerifier release, URI mirror, File directory, PackageManager packages)
