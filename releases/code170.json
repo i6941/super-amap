@@ -1,0 +1,21 @@
+{
+  "apk": "super-amap-code26000170.apk",
+  "sha256": "440bcfee4ef5ef0f89614cdef7490c9f67dacd52f3702ea9910f64b789b2d574",
+  "version_code": 26000170,
+  "changed_payload": [
+    "AndroidManifest.xml",
+    "assets/superamap-update-key.der",
+    "classes4.dex"
+  ],
+  "methods": [],
+  "signature": {
+    "verified": true,
+    "checked_api": 27,
+    "v1": false,
+    "v2": true,
+    "errors": 0,
+    "warnings": 0,
+    "warning_types": {},
+    "certificate_sha256": "2eb83fbdc4f257b14f9be0f6c56da84b5375565346a827818d653237aa42b2d5"
+  }
+}

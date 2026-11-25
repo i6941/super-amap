@@ -65,18 +65,32 @@ final class GithubUpdates {
     }
 
     static File fetch(Context context, UpdateVerifier offer) throws Exception {
+        return fetch(context, offer, null);
+    }
+
+    static File fetch(Context context, UpdateVerifier offer, UpdateDownload.Progress progress) throws Exception {
         PackageManager packages = context.getPackageManager();
         PackageInfo installed = installed(packages, offer.packageName);
         if (offer.versionCode <= installed.versionCode) throw new IOException("An equal or newer version is installed");
         File directory = directory(context, offer.packageName);
+        File target = new File(directory, "update-" + offer.versionCode + ".apk");
+        // A verified cache avoids downloading 100+ MB again after the installer was dismissed.
+        if (target.isFile()) {
+            try {
+                offer.verifyApk(target, packages);
+                if (!RELAY.equals(offer.packageName) || isRelay(packages, target)) return target;
+            } catch (Exception invalid) {
+                target.delete();
+            }
+        }
         // Only one installer can be staged at a time. Keep the cache bounded across releases.
         File[] previous = directory.listFiles((parent, name) -> name.matches("update-[0-9]+\\.apk"));
-        if (previous != null) for (File old : previous) old.delete();
+        if (previous != null) for (File old : previous) if (!old.equals(target)) old.delete();
         Exception failure = null;
         for (String prefix : PREFIXES) {
             if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
             try {
-                File apk = UpdateDownload.download(offer, URI.create(prefix + offer.url), directory, packages);
+                File apk = UpdateDownload.download(offer, URI.create(prefix + offer.url), directory, packages, progress);
                 if (RELAY.equals(offer.packageName) && !isRelay(packages, apk)) {
                     apk.delete();
                     throw new SecurityException("APK is missing the LX relay component");

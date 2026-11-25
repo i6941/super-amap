@@ -29,15 +29,23 @@ public final class UpdateDownload {
                 readSmall(signature, 1024), publicKey, packages, installed);
     }
 
+    /** Called from a background thread while an APK downloads. */
+    public interface Progress { void update(long read, long total); }
+
     public static File download(UpdateVerifier release, URI mirror, File directory, PackageManager packages)
             throws Exception {
+        return download(release, mirror, directory, packages, null);
+    }
+
+    public static File download(UpdateVerifier release, URI mirror, File directory, PackageManager packages,
+                                Progress progress) throws Exception {
         if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("No update cache");
         File target = new File(directory, "update-" + release.versionCode + ".apk");
         File partial = File.createTempFile("update-pending-", ".apk", directory);
         try {
             HttpsURLConnection connection = open(mirror == null ? release.url : mirror);
             try (InputStream input = connection.getInputStream(); FileOutputStream output = new FileOutputStream(partial)) {
-                copy(input, output, release.size);
+                copy(input, output, release.size, progress);
                 output.getFD().sync();
             } finally {
                 connection.disconnect();
@@ -90,13 +98,24 @@ public final class UpdateDownload {
     }
 
     private static void copy(InputStream input, OutputStream output, long maximum) throws IOException {
+        copy(input, output, maximum, null);
+    }
+
+    private static void copy(InputStream input, OutputStream output, long maximum, Progress progress)
+            throws IOException {
         byte[] buffer = new byte[32768];
         long size = 0;
+        long next = 1024 * 1024;
         for (int n; (n = input.read(buffer)) != -1;) {
             if (Thread.currentThread().isInterrupted()) throw new IOException("Update cancelled");
             size += n;
             if (size > maximum) throw new IOException("Update response exceeds declared size");
             output.write(buffer, 0, n);
+            if (progress != null && size >= next) {
+                progress.update(size, maximum);
+                next = size + 1024 * 1024;
+            }
         }
+        if (progress != null) progress.update(size, maximum);
     }
 }

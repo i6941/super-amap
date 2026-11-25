@@ -17,6 +17,7 @@ import android.widget.TextView;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -49,6 +50,10 @@ public final class UpdateActivity extends Activity {
         note.setTextColor(0xFFB0BEC5);
         content.addView(note, layout(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 0, 20, density));
+        TextView hint = text("首次使用若被系统拦截，请在设置中允许超级高德安装未知应用。", 22, false);
+        hint.setTextColor(0xFFFFB74D);
+        content.addView(hint, layout(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 0, 8, density));
         addRow(content, main);
         addRow(content, relay);
         refresh = new Button(this);
@@ -166,6 +171,10 @@ public final class UpdateActivity extends Activity {
         });
     }
 
+    private static String megabytes(long bytes) {
+        return String.format(Locale.US, "%.0f", bytes / 1048576.0);
+    }
+
     private static String reason(Exception failure) {
         String message = failure.getMessage();
         if (message == null) return failure.getClass().getSimpleName();
@@ -187,10 +196,19 @@ public final class UpdateActivity extends Activity {
         updateButtons();
         worker.execute(() -> {
             try {
-                GithubUpdates.fetch(getApplicationContext(), offer);
+                GithubUpdates.fetch(getApplicationContext(), offer, (read, total) -> {
+                    if (total <= 0) return;
+                    int percent = (int) Math.min(100, read * 100 / total);
+                    String message = "正在下载 " + percent + "%（" + megabytes(read)
+                            + " / " + megabytes(total) + " MB）";
+                    runOnUiThread(() -> {
+                        if (!destroyed && row.offer == offer) row.status.setText(message);
+                    });
+                });
                 runOnUiThread(() -> showInstaller(row, offer));
             } catch (Exception failure) {
-                runOnUiThread(() -> finishDownload(row, "下载或校验失败，请重试"));
+                Log.w(TAG, "Update download failed for " + offer.packageName, failure);
+                runOnUiThread(() -> finishDownload(row, "下载或校验失败（" + reason(failure) + "）"));
             }
         });
     }
