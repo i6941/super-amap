@@ -20,6 +20,8 @@ public final class UpdateVerifier {
     public final int versionCode;
     public final long size;
     public final URI url;
+    /** Route that supplied the authenticated manifest, for display only. */
+    public String channel = "";
 
     private UpdateVerifier(JSONObject data) throws Exception {
         packageName = data.getString("package");
@@ -40,6 +42,13 @@ public final class UpdateVerifier {
 
     public static UpdateVerifier verifyManifest(byte[] payload, byte[] signature, byte[] publicKey,
                                                  PackageInfo installed) throws Exception {
+        UpdateVerifier release = inspectManifest(payload, signature, publicKey, installed);
+        if (release.versionCode <= installed.versionCode) throw new SecurityException("Non-increasing version");
+        return release;
+    }
+
+    static UpdateVerifier inspectManifest(byte[] payload, byte[] signature, byte[] publicKey,
+                                          PackageInfo installed) throws Exception {
         if (payload.length > 16 * 1024 || signature.length > 1024 || publicKey.length > 2048)
             throw new IllegalArgumentException("Oversized update metadata");
         RSAPublicKey key = (RSAPublicKey) KeyFactory.getInstance("RSA")
@@ -50,9 +59,9 @@ public final class UpdateVerifier {
         verifier.update(payload);
         if (!verifier.verify(signature)) throw new SecurityException("Manifest signature mismatch");
         UpdateVerifier release = new UpdateVerifier(new JSONObject(new String(payload, StandardCharsets.UTF_8)));
-        if (!release.packageName.equals(installed.packageName) || release.versionCode <= installed.versionCode
+        if (!release.packageName.equals(installed.packageName)
                 || !release.certificateSha256.equals(fingerprint(installed.signatures)))
-            throw new SecurityException("Unexpected update identity or non-increasing version");
+            throw new SecurityException("Unexpected update identity");
         return release;
     }
 

@@ -23,6 +23,12 @@ public final class UpdateDownload {
                 readSmall(signature, 1024), publicKey, installed);
     }
 
+    static UpdateVerifier inspect(URI manifest, URI signature, byte[] publicKey, PackageInfo installed)
+            throws Exception {
+        return UpdateVerifier.inspectManifest(readSmall(manifest, 16 * 1024),
+                readSmall(signature, 1024), publicKey, installed);
+    }
+
     public static File download(UpdateVerifier release, URI mirror, File directory, PackageManager packages)
             throws Exception {
         if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("No update cache");
@@ -62,6 +68,8 @@ public final class UpdateDownload {
                 throw new IOException("Update requires HTTPS");
             HttpsURLConnection connection = (HttpsURLConnection) uri.toURL().openConnection();
             connection.setInstanceFollowRedirects(false);
+            connection.setRequestProperty("Accept-Encoding", "identity");
+            connection.setRequestProperty("User-Agent", "SuperAmap-Updater/1");
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(15000);
             int status;
@@ -85,6 +93,7 @@ public final class UpdateDownload {
         byte[] buffer = new byte[32768];
         long size = 0;
         for (int n; (n = input.read(buffer)) != -1;) {
+            if (Thread.currentThread().isInterrupted()) throw new IOException("Update cancelled");
             size += n;
             if (size > maximum) throw new IOException("Update response exceeds declared size");
             output.write(buffer, 0, n);
