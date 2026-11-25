@@ -46,9 +46,11 @@ for the prerequisites for updating the factory navigation app.
 
 The first code168 installation is manual. After that, open
 **超级高德更新** on the head unit to check both packages online and confirm the
-system installer. The vehicle owner confirmed testing on a GAC AION LX head
-unit. The APK signatures were verified at Android API 27. The code573 relay
-targets the release application ID and passed offline checks.
+system installer. A parked check on the AION LX downloaded and verified code168
+through the in-app entry; the head unit now runs code168 and the update screen
+reports both packages up-to-date. The vehicle owner confirmed testing on a GAC
+AION LX head unit. The APK signatures were verified at Android API 27. The
+code573 relay targets the release application ID and passed offline checks.
 
 [Build report](releases/code168.json) and
 [application ID build script](tools/build_release_identity.py). The script
